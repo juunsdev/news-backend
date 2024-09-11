@@ -234,7 +234,6 @@ result = cursor.fetchall()
 if result:
     for source in result:
         sources[source["key"]] = source["id"]
-print("News API: Successfully retrieved sources from db.")
 listcategories = ['business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology']
 for categorykey in listcategories:
     # define category
@@ -266,12 +265,13 @@ for categorykey in listcategories:
             sourcekey = news["source"]["id"]
             sourceid = sources.get(sourcekey, None)
             # check source exists
-            if not sourceid:
+            if sourceid is None:
                 sql = "INSERT INTO `sources` (`key`, `name`, `type`, `created_at`, `updated_at`) VALUES (%s, %s, %s, NOW(), NOW())"
                 params = (sourcekey, sourcename, news_api_type,)
                 cursor.execute(sql, params)
                 db.commit
                 sourceid = cursor.lastrowid
+                sources[sourcekey] = sourceid
 
             # check if news exists
             sql = "SELECT * FROM `news` WHERE `title` = %s AND source_id = %s"
@@ -298,7 +298,7 @@ for categorykey in listcategories:
 
                 # convert news date
                 try:
-                    publishedat = datetime.strptime(news['publishedAt'], '%Y-%m-%dT%H:%M:%SZ') if news['publishedAt'] else datetime.now()
+                    publishedat = datetime.strptime(news['publishedAt'], '%Y-%m-%dT%H:%M:%SZ') if news['publishedAt'] and news['publishedAt'] != "1970-01-01T00:00:00Z" else datetime.now()
                 except:
                     publishedat = datetime.now()
 
